@@ -24,25 +24,38 @@ public class ServicioMensajes extends Service {
     @SuppressLint("Range")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Uri mensajes = Uri.parse("content://sms/inbox");
-        ContentResolver cr = getContentResolver();
-        Cursor c = cr.query(mensajes,
-                null,
-                null,
-                null,
-                null);
-        String dia = null;
-        String mensaje = null;
-        if(c != null && c.getCount()>0){
-            int i = 1;
-            while(c.moveToNext() && i<6){
-                dia = c.getString(c.getColumnIndex(Telephony.Sms._ID));
-                mensaje = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
-                Log.d("mensajes", dia +" "+ mensaje );
-                i++;
+        Thread trabajador = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Uri mensajes = Uri.parse("content://sms/inbox");
+                ContentResolver cr = getContentResolver();
+                while (true) {
+                    Cursor c = cr.query(mensajes,
+                            null,
+                            null,
+                            null,
+                            null);
+                    String dia = null;
+                    String mensaje = null;
+                    if (c != null && c.getCount() > 0) {
+                        int i = 1;
+                        while (c.moveToNext() && i < 6) {
+                            dia = c.getString(c.getColumnIndex(Telephony.Sms._ID));
+                            mensaje = c.getString(c.getColumnIndex(Telephony.Sms.BODY));
+                            Log.d("mensajes", dia + " " + mensaje);
+                            i++;
+                        }
+                        try {
+                            Thread.sleep(9000);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                    c.close();
+                }
             }
-            c.close();
-        }
+        });
+        trabajador.start();
         return START_STICKY;
     }
 
